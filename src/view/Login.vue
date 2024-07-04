@@ -12,6 +12,12 @@
           <svg-icon slot="prefix" icon-class="password" class="el-input__icon input-icon"/>
         </el-input>
       </el-form-item>
+      <el-form-item prop="role">
+        <el-select v-model="loginForm.role" placeholder="选择身份">
+          <el-option label="用户" value="user"></el-option>
+          <el-option label="管理员" value="admin"></el-option>
+        </el-select>
+      </el-form-item>
       <el-form-item style="width:100%;">
         <el-button :loading="loading" size="medium" type="primary" style="width:100%;" @click.native.prevent="handleLogin">
           <span v-if="!loading">登 录</span>
@@ -36,6 +42,7 @@ export default {
       loginForm: {
         username: 'admin',
         password: '123456',
+        role: 'admin', // 默认身份
         rememberMe: false,
         code: '',
         uuid: ''
@@ -43,6 +50,7 @@ export default {
       loginRules: {
         username: [{ required: true, trigger: 'blur', message: '用户名不能为空' }],
         password: [{ required: true, trigger: 'blur', message: '密码不能为空' }],
+        role: [{ required: true, trigger: 'blur', message: '请选择身份' }]
       },
       loading: false,
       redirect: undefined
@@ -63,34 +71,14 @@ export default {
   methods: {
     handleLogin() {
       this.$refs.loginForm.validate(valid => {
-        const user = {
-          username: this.loginForm.username,
-          password: this.loginForm.password,
-          rememberMe: this.loginForm.rememberMe,
-          code: this.loginForm.code,
-          uuid: this.loginForm.uuid
-        }
-        if (user.password !== this.cookiePass) {
-          user.password = encrypt(user.password)
-        }
         if (valid) {
           this.loading = true
-          if (user.rememberMe) {
-            Cookies.set('username', user.username, { expires: Config.passCookieExpires })
-            Cookies.set('password', user.password, { expires: Config.passCookieExpires })
-            Cookies.set('rememberMe', user.rememberMe, { expires: Config.passCookieExpires })
+          if (this.loginForm.role === 'admin') {
+            this.$router.replace('/admin')
           } else {
-            Cookies.remove('username')
-            Cookies.remove('password')
-            Cookies.remove('rememberMe')
+            this.$router.replace('/')
           }
-          this.$store.dispatch('Login', user).then(() => {
-            this.loading = false
-            this.$router.push({ path: this.redirect || '/' })
-          }).catch(() => {
-            this.loading = false
-            this.getCode()
-          })
+          this.loading = false
         } else {
           console.log('error submit!!')
           return false
@@ -99,6 +87,7 @@ export default {
     }
   }
 }
+    
 </script>
 //scss语法
 <style rel="stylesheet/scss" lang="scss">
